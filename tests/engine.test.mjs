@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {rng,trail,crowns,validCrowns,completeCrowns,sudoku,sudokuSolutions,conflicts,adjacent,wordSets} from '../engine.js';
+test('100 daily trails cover the grid with ordered anchors',()=>{for(let seed=0;seed<100;seed++){const p=trail(rng(seed));assert.equal(new Set(p.solution).size,25);assert.ok(p.solution.slice(1).every((v,i)=>adjacent(p.solution[i],v,5)));assert.deepEqual(p.anchors.map(a=>p.solution.indexOf(a.cell)),[0,5,10,15,20,24])}});
+test('100 crown boards have valid solutions and connected regions',()=>{for(let seed=0;seed<100;seed++){const p=crowns(rng(seed));assert.ok(validCrowns(p.solution,p.regions));for(let n=0;n<5;n++){const cells=p.regions.flatMap((v,i)=>v===n?[i]:[]),seen=new Set([cells[0]]);let prior=-1;while(prior!==seen.size){prior=seen.size;cells.forEach(i=>{if([...seen].some(j=>adjacent(i,j,5)))seen.add(i)})}assert.equal(seen.size,cells.length)}}});
+test('60 sixfold puzzles have exactly one solution and valid clues',()=>{for(let seed=0;seed<60;seed++){const p=sudoku(rng(seed));assert.equal(sudokuSolutions([...p.givens]),1);assert.ok(p.solution.every((v,i)=>!conflicts(p.solution,i,v)));assert.ok(p.givens.every((v,i)=>!v||v===p.solution[i]))}});
+test('curated word sets each contain 16 distinct words in four groups',()=>{for(const groups of wordSets){assert.equal(groups.length,4);groups.forEach(g=>assert.equal(g.length,5));assert.equal(new Set(groups.flatMap(g=>g.slice(1))).size,16)}});
+test('daily seed is deterministic',()=>assert.deepEqual(trail(rng('2026-10-15')),trail(rng('2026-10-15'))));
+test('invalid crown arrangements fail',()=>{const p=crowns(rng(5));assert.equal(validCrowns([0,6,12,18,24],p.regions),false);assert.equal(validCrowns(p.solution.slice(1),p.regions),false)});
+test('Crown hint solver preserves pinned crowns and detects impossible arrangements',()=>{for(let seed=0;seed<100;seed++){const p=crowns(rng(seed)),pinned=p.solution.slice(0,3),answer=completeCrowns(pinned,p.regions);assert.ok(validCrowns(answer,p.regions));assert.ok(pinned.every(i=>answer.includes(i)));assert.equal(completeCrowns([0,1],p.regions),null)}});
