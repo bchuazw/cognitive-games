@@ -45,7 +45,9 @@ npm.cmd install
 npm.cmd test
 ```
 
-There are 35 tests covering puzzle invariants and actual application event handlers. See `PLAYTEST.md` for limitations. Google Fonts has local font fallbacks; other assets are served locally.
+There are 39 tests covering puzzle invariants, actual application event handlers, and feedback lifecycle. See `PLAYTEST.md` for limitations. Google Fonts has local font fallbacks; other assets are served locally.
+
+Interaction feedback includes contact rings, tile press/settle responses, subtle error shakes, animated path segments and correct-answer pulses. Brief physical vibration is available only where supported by the browser and device. Reduced-motion settings disable nonessential animation and haptics. Rapid inputs cancel overlapping effects; changing games clears active effects.
 
 ## Inspiration and content
 

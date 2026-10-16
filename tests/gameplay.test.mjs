@@ -111,3 +111,38 @@ test('Thread handles rejection, unfolding and a complete compound-word reveal',a
 test('Wordhop allows correction and returning a misplaced word to the bank',async()=>{const t=await setup();try{t.click('[data-game="hop"]');const s=t.w.testApi.getState();t.click(`[data-quick="${s.bank.indexOf(s.path[2])}"]`);assert.equal(s.slots[1],s.path[2]);t.click('[data-action="hop-clear"]');assert.equal(s.slots[1],null);for(let n=1;n<=3;n++){t.click(`[data-slot="${n}"]`);t.click(`[data-quick="${s.bank.indexOf(s.path[n])}"]`)}assert.ok(s.done);assert.match(t.text(),/SOLVED/)}finally{t.dom.window.close()}});
 test('Duet keeps clues locked, supports removal, and accepts the valid solution',async()=>{const t=await setup();try{t.click('[data-game="duet"]');const s=t.w.testApi.getState(),blank=s.givens.findIndex(v=>v===null),fixed=s.givens.findIndex(v=>v!==null);assert.ok(t.w.document.querySelector(`[data-quick="${fixed}"]`).disabled);t.click('[data-plant="1"]');t.click(`[data-quick="${blank}"]`);t.click(`[data-quick="${blank}"]`);assert.equal(s.board[blank],null);for(let i=0;i<16;i++)if(s.givens[i]===null){t.click(`[data-plant="${s.solution[i]}"]`);t.click(`[data-quick="${i}"]`)}assert.ok(s.done)}finally{t.dom.window.close()}});
 test('Versioned short-puzzle progress resumes without reviving old timed sessions',async()=>{const t=await setup(JSON.stringify({records:{},sessions:{[`${engine.dayKey()}:spot`]:{done:true,round:8}}}));let storage;try{t.click('[data-game="spot"]');const s=t.w.testApi.getState();assert.equal(s.round,0);t.click(`[data-quick="${s.rounds[0].odd}"]`);storage=t.w.localStorage.getItem('lbl-v1')}finally{t.dom.window.close()}const reloaded=await setup(storage);try{reloaded.click('[data-game="spot"]');assert.equal(reloaded.w.testApi.getState().round,1)}finally{reloaded.dom.window.close()}});
+
+test('Repeated tile feedback cancels the previous effect and navigation clears active effects',async()=>{
+ const t=await setup();try{
+  t.click('[data-game="duet"]');const s=t.w.testApi.getState(),i=s.givens.findIndex(v=>v===null),tile=t.w.document.querySelector(`[data-quick="${i}"]`),effects=[];
+  tile.animate=(frames,options)=>{const handlers={},effect={cancelled:false,cancel(){this.cancelled=true;handlers.cancel?.()},addEventListener(type,fn){handlers[type]=fn},frames,options};effects.push(effect);return effect};
+  t.click(`[data-quick="${i}"]`);t.click(`[data-quick="${i}"]`);
+  assert.equal(effects.length,2);assert.ok(effects[0].cancelled);assert.equal(s.board[i],null);assert.equal(tile,t.w.document.querySelector(`[data-quick="${i}"]`));
+  t.click('[data-action="home"]');assert.ok(effects[1].cancelled);
+ }finally{t.dom.window.close()}
+});
+test('Pointer contact creates a noninteractive touch ring; disabled and reduced-motion controls do not',async()=>{
+ const t=await setup();try{
+  t.click('[data-game="duet"]');const s=t.w.testApi.getState(),i=s.givens.findIndex(v=>v===null),fixed=s.givens.findIndex(v=>v!==null),tile=t.w.document.querySelector(`[data-quick="${i}"]`);
+  tile.getBoundingClientRect=()=>({left:0,top:0,width:60,height:60});
+  const event=()=>new t.w.MouseEvent('pointerdown',{bubbles:true,clientX:25,clientY:30,button:0});tile.dispatchEvent(event());
+  const ring=t.w.document.querySelector('.touch-ring');assert.ok(ring);assert.equal(ring.getAttribute('aria-hidden'),'true');assert.equal(s.board[i],null);
+  t.w.clearFeedback();t.w.document.querySelector(`[data-quick="${fixed}"]`).dispatchEvent(event());assert.ok(!t.w.document.querySelector('.touch-ring'));
+  t.w.matchMedia=()=>({matches:true});tile.dispatchEvent(event());assert.ok(!t.w.document.querySelector('.touch-ring'));
+ }finally{t.dom.window.close()}
+});
+test('Haptics are rate limited, optional, safe on unsupported devices and respect reduced motion',async()=>{
+ const t=await setup();try{
+  let now=1000;const calls=[];t.w.Date.now=()=>now;t.w.navigator.vibrate=pattern=>{calls.push(pattern);return true};
+  t.w.haptic('error');t.w.haptic('error');assert.equal(calls.length,1);assert.deepEqual([...calls[0]],[10,35,10]);now+=100;t.w.haptic('success');assert.equal(calls.length,2);
+  now+=100;t.w.matchMedia=()=>({matches:true});t.w.haptic('success');assert.equal(calls.length,2);
+  t.w.matchMedia=()=>({matches:false});t.w.navigator.vibrate=()=>{throw Error('Unavailable')};now+=100;assert.doesNotThrow(()=>t.w.haptic('tap'));
+ }finally{t.dom.window.close()}
+});
+test('Trail splits its settled line from the live segment and keeps both correct after rewinding',async()=>{
+ const t=await setup();try{
+  t.click('[data-game="trail"]');const s=t.w.testApi.getState();for(const i of s.solution.slice(0,4))t.click(`[data-cell="${i}"]`);
+  const assertLine=()=>{const end=s.path.at(-1),prev=s.path.at(-2),line=t.w.document.querySelector('.path-step');assert.equal(+line.getAttribute('x1'),prev%5*100+50);assert.equal(+line.getAttribute('y2'),Math.floor(end/5)*100+50);assert.equal(line.getAttribute('pathLength'),'100')};
+  assertLine();t.click(`[data-cell="${s.solution[1]}"]`);assert.equal(s.path.length,2);assertLine();
+ }finally{t.dom.window.close()}
+});

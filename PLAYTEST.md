@@ -1,6 +1,6 @@
 # Current verification
 
-## Passed: 35 automated tests
+## Passed: 39 automated tests
 
 - Complete all ten games through their UI event handlers.
 - Verify all ten cards share one grid, with the five compact games after the originals.
@@ -14,12 +14,15 @@
 - Check every Wordhop ladder differs by one letter at each link.
 - Check every Thread set has three directional fragments and six distinct choices.
 - Verify reduced-motion behavior and Echo playback interruption.
+- Verify repeated effects cancel cleanly, navigation clears active effects, disabled controls do not create touch rings, haptics are rate limited and safe when unavailable, and Trail segments remain correct when rewinding.
 
 ## Design changes
 
 Peel, Upbeat and Glow are replaced by Thread, Wordhop and Duet. Oddly now requires comparing rotated four-shape patterns. Sumthing uses two-step equations instead of single elementary sums. Compact games are self-paced and immediately playable, with sparse instructions beside the board.
 
 Motion is restrained: small press responses, brief error nudges, short reveals, and preserved DOM controls for focus and stable interaction. New puzzle completions show the solved connection or word chain where applicable instead of full-screen confetti. Duet uses neutral ink/ivory symbols, clear selected tools, fixed-clue markers, a center outline, and local rule feedback.
+
+The tactile pass adds contact rings, press depth, tile settling, correct-answer and score pulses, vibration-like error shakes, animated Trail segments, staggered word shuffles, and completion emblems. Supporting browsers/devices receive brief vibration feedback on meaningful actions, with rate limiting and reduced-motion protection. Desktop hover movement is restricted to fine-pointer devices. Effects do not delay input, and each tile cancels its previous effect before starting another.
 
 ## Verification limits
 
