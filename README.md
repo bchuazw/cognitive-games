@@ -1,6 +1,6 @@
 # Little by Little
 
-Ten browser puzzles in one grid. The original five are followed immediately by five compact, self-paced games for adults.
+Ten browser puzzles.
 
 ## Run
 
@@ -31,7 +31,6 @@ Open http://localhost:4173, or double-click `Start Games.cmd`. The server binds 
 | Wordhop | Fill three clued gaps between endpoints, changing one letter each step |
 | Duet | Balance two ink/two ivory tiles in each row, column and outlined center |
 
-Peel, Upbeat and Glow have been replaced. The five compact puzzles start immediately, have no countdown or expiry, and award no speed bonus. They are short because of their puzzle size, not a time restriction. Completion scores begin at 1,000, with deductions for incorrect attempts and revealed clues. Duet permits freely revising placements without a score penalty.
 
 Daily seeds use the device's local date. Progress is saved in browser localStorage. Revised puzzles use versioned save keys so old timed sessions do not contaminate the new games; old records are preserved. Practice puzzles are available after completion. No accounts, ads, analytics or cloud sync.
 
