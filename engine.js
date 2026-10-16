@@ -3,7 +3,40 @@ export function rng(seed){let n=2166136261;for(const c of String(seed))n=Math.im
 export function shuffle(a,r){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 export const adjacent=(a,b,n)=>Math.abs(a%n-b%n)+Math.abs(Math.floor(a/n)-Math.floor(b/n))===1;
 export function trail(r){let path=[];for(let row=0;row<5;row++)for(let c=0;c<5;c++)path.push(row*5+(row%2?4-c:c));for(let k=0;k<120;k++){const end=path.at(-1),near=path.map((v,i)=>adjacent(end,v,5)&&i<23?i:-1).filter(i=>i>=0);if(near.length){const i=near[Math.floor(r()*near.length)];path=[...path.slice(0,i+1),...path.slice(i+1).reverse()]}}if(r()<.5)path.reverse();return {solution:path,anchors:[0,5,10,15,20,24].map((i,j)=>({cell:path[i],label:j+1}))}}
-export function crowns(r){const options=[];function visit(a){if(a.length===5){options.push(a);return}for(let c=0;c<5;c++)if(!a.includes(c)&&(!a.length||Math.abs(c-a.at(-1))>1))visit([...a,c])}visit([]);const cols=options[Math.floor(r()*options.length)],solution=cols.map((c,i)=>i*5+c),regions=Array(25).fill(-1);solution.forEach((v,i)=>regions[v]=i);while(regions.includes(-1)){const candidates=[];regions.forEach((v,i)=>{if(v<0)for(let j=0;j<25;j++)if(regions[j]>=0&&adjacent(i,j,5))candidates.push([i,regions[j]])});const [i,v]=candidates[Math.floor(r()*candidates.length)];regions[i]=v}return{solution,regions}}
+export function completeTrail(path,anchors){
+ const labels=new Map(anchors.map(a=>[a.cell,a.label])),route=path.length?[...path]:[anchors[0].cell],seen=new Set(route);
+ // Prune when the unvisited squares are no longer one region reachable from the path's head.
+ function connected(){const left=25-route.length;if(!left)return true;const head=route.at(-1),reached=new Set(),queue=[head];while(queue.length){const cur=queue.pop();for(const i of [cur-5,cur+5,cur%5?cur-1:-1,cur%5<4?cur+1:-1])if(i>=0&&i<25&&!seen.has(i)&&!reached.has(i)){reached.add(i);queue.push(i)}}return reached.size===left}
+ function search(next){
+  if(route.length===25)return true;
+  if(!connected())return false;
+  const cur=route.at(-1);
+  for(const i of [cur-5,cur+5,cur%5?cur-1:-1,cur%5<4?cur+1:-1]){
+   if(i<0||i>24||seen.has(i))continue;
+   const label=labels.get(i);
+   if(label&&(label!==next||(label===6&&route.length!==24)))continue;
+   route.push(i);seen.add(i);
+   if(search(label?next+1:next))return true;
+   route.pop();seen.delete(i);
+  }
+  return false;
+ }
+ return search(route.filter(i=>labels.has(i)).length+1)?route:null;
+}
+export function crownSolutions(regions,limit=2){
+ let count=0;
+ function search(row,placed){
+  if(row===5){count++;return}
+  for(let c=0;c<5&&count<limit;c++){
+   const i=row*5+c;
+   if(placed.some(j=>i%5===j%5||regions[i]===regions[j]||(Math.abs(i%5-j%5)<=1&&row-Math.floor(j/5)<=1)))continue;
+   search(row+1,[...placed,i]);
+  }
+ }
+ search(0,[]);return count;
+}
+// Regenerate until the board has exactly one answer, so it can be solved by deduction rather than guessing.
+export function crowns(r){const options=[];function visit(a){if(a.length===5){options.push(a);return}for(let c=0;c<5;c++)if(!a.includes(c)&&(!a.length||Math.abs(c-a.at(-1))>1))visit([...a,c])}visit([]);for(let tries=0;;tries++){const cols=options[Math.floor(r()*options.length)],solution=cols.map((c,i)=>i*5+c),regions=Array(25).fill(-1);solution.forEach((v,i)=>regions[v]=i);while(regions.includes(-1)){const candidates=[];regions.forEach((v,i)=>{if(v<0)for(let j=0;j<25;j++)if(regions[j]>=0&&adjacent(i,j,5))candidates.push([i,regions[j]])});const [i,v]=candidates[Math.floor(r()*candidates.length)];regions[i]=v}if(crownSolutions(regions)===1||tries>=500)return{solution,regions}}}
 export function validCrowns(cells,regions){return cells.length===5&&cells.every((a,i)=>cells.every((b,j)=>i===j||(a%5!==b%5&&Math.floor(a/5)!==Math.floor(b/5)&&regions[a]!==regions[b]&&(Math.abs(a%5-b%5)>1||Math.abs(Math.floor(a/5)-Math.floor(b/5))>1))))}
 export function completeCrowns(pinned,regions){
  function search(row,placed){

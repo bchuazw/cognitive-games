@@ -28,6 +28,11 @@ test('Echo plays sequences, retries mistakes, and completes five rounds',async()
  playback();t.click(`[data-cell="${(t.w.testApi.getState().sequence[0]+1)%9}"]`);assert.equal(t.w.testApi.getState().mistakes,1);
  for(let r=1;r<=5;r++){playback();const s=t.w.testApi.getState();for(const i of s.sequence.slice(0,r+2))t.click(`[data-cell="${i}"]`)}assert.equal(t.w.testApi.getState().done,true)
  }finally{t.dom.window.close()}});
+test('Trail hint extends a valid route that differs from the stored solution',async()=>{
+ const t=await setup();try{t.click('[data-game="trail"]');let p,alt;for(let seed=0;!alt;seed++){p=engine.trail(engine.rng(seed));const labels=new Map(p.anchors.map(a=>[a.cell,a.label]));(function go(path){if(alt)return;if(path.length===25){if(path[1]!==p.solution[1])alt=path;return}const next=path.filter(i=>labels.has(i)).length+1;for(let i=0;i<25;i++){if(path.includes(i)||!engine.adjacent(path.at(-1),i,5))continue;const l=labels.get(i);if(l&&(l!==next||(l===6&&path.length!==24)))continue;go([...path,i])}})([p.anchors[0].cell])}
+  const s=t.w.testApi.getState();Object.assign(s,{anchors:p.anchors,solution:p.solution,path:alt.slice(0,6)});t.click('[data-action="hint"]');
+  assert.equal(s.path.length,7);assert.deepEqual(s.path.slice(0,6),alt.slice(0,6));assert.match(t.text(),/One step closer/)
+ }finally{t.dom.window.close()}});
 test('Hints, help and restart work; elapsed time and hint counts survive undo',async()=>{const t=await setup();try{t.click('[data-game="trail"]');t.click('[data-action="help"]');assert.ok(t.w.document.querySelector('dialog[open]'));t.click('.dialog-close');t.click('[data-action="hint"]');assert.equal(t.w.testApi.getState().path.length,1);t.click('[data-action="undo"]');assert.equal(t.w.testApi.getState().path.length,0);assert.equal(t.w.testApi.getState().hints,1);t.click('[data-action="restart"]');t.click('#confirm-restart');assert.equal(t.w.testApi.getState().hints,0)}finally{t.dom.window.close()}});
 
 test('Trail explains invalid first moves and keeps pointer targets alive for dragging and rewinding',async()=>{
