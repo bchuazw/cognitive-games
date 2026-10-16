@@ -103,40 +103,11 @@ test('Every board has a short inline rule without opening help',async()=>{
  const t=await setup();try{for(const id of ['trail','crowns','words','sudoku','echo']){t.w.testApi.openGame(id);const guide=t.w.document.querySelector('.quick-guide');assert.ok(guide.textContent.length>35);assert.ok(!t.w.document.querySelector('dialog'));assert.ok(!guide.textContent.includes('?'))}}finally{t.dom.window.close()}
 });
 
-test('All ten cards share one grid, with the five new games directly after the original five',async()=>{
- const t=await setup();try{assert.equal(t.w.document.querySelectorAll('.game-cards').length,1);assert.deepEqual([...t.w.document.querySelectorAll('.game-cards [data-game]')].map(el=>el.dataset.game),['trail','crowns','words','sudoku','echo','spot','math','pairs','order','switch']);assert.match(t.text(),/0\/10 complete/)}finally{t.dom.window.close()}
-});
-test('Oddly and Sumthing complete all eight rounds with visible score and replay',async()=>{
- for(const id of ['spot','math']){const t=await setup();try{t.click(`[data-game="${id}"]`);assert.ok(t.w.document.querySelector('[data-quick]').disabled);t.click('[data-action="quick-start"]');const s=t.w.testApi.getState();
-  for(let r=0;r<8;r++)t.click(`[data-quick="${id==='spot'?s.rounds[r].odd:s.rounds[r].answer}"]`);
-  assert.ok(s.done&&s.solved);assert.ok(t.w.document.querySelector('.sprint-result'));assert.ok(JSON.parse(t.w.localStorage.getItem('lbl-v1')).best[id]>0);t.click('[data-action="practice"]');assert.equal(t.w.testApi.getState().started,false);assert.equal(t.w.testApi.getState().done,false);
- }finally{t.dom.window.close()}}
-});
-test('Peel rejects double taps, waits on mismatches and completes six pairs',async()=>{
- const t=await setup();try{t.click('[data-game="pairs"]');t.click('[data-action="quick-start"]');const s=t.w.testApi.getState();const pending=new Map();let next=0;t.w.setTimeout=(fn,delay)=>{pending.set(++next,{fn,delay});return next};t.w.clearTimeout=id=>pending.delete(id);
-  t.click('[data-quick="0"]');t.click('[data-quick="0"]');assert.equal(s.faceup.length,1);
-  const mismatch=s.deck.findIndex(n=>n!==s.deck[0]);t.click(`[data-quick="${mismatch}"]`);assert.ok(s.locked);assert.ok([...t.w.document.querySelectorAll('[data-quick]')].every(el=>el.disabled));
-  for(const [id,task] of pending)if(task.delay===850){task.fn();pending.delete(id)}assert.equal(s.locked,false);assert.equal(s.faceup.length,0);
-  for(let fruit=0;fruit<6;fruit++)for(let i=0;i<12;i++)if(s.deck[i]===fruit)t.click(`[data-quick="${i}"]`);
-  assert.ok(s.done&&s.solved);assert.equal(s.matched.length,12);
- }finally{t.dom.window.close()}
-});
-test('Upbeat ignores completed numbers and finishes in order',async()=>{
- const t=await setup();try{t.click('[data-game="order"]');t.click('[data-action="quick-start"]');t.click('[data-quick="5"]');assert.match(t.text(),/Find 1 next/);for(let n=1;n<=16;n++)t.click(`[data-quick="${n}"]`);assert.ok(t.w.testApi.getState().done)}finally{t.dom.window.close()}
-});
-test('Glow reveals three solved boards, locks transitions and preserves a partial board on return',async()=>{
- const t=await setup();try{t.click('[data-game="switch"]');t.click('[data-action="quick-start"]');const s=t.w.testApi.getState();t.click('[data-quick="0"]');const lights=[...s.lights];t.click('[data-action="home"]');t.click('[data-game="switch"]');assert.deepEqual([...t.w.testApi.getState().lights],lights);t.click('[data-action="quick-start"]');t.click('[data-action="quick-reset"]');
-  const pending=[];t.w.setTimeout=(fn,delay)=>{pending.push({fn,delay});return pending.length};t.w.clearTimeout=()=>{};
-  for(let round=0;round<3;round++){for(const i of s.puzzles[round].solution)t.click(`[data-quick="${i}"]`);if(round<2){assert.ok(s.locked);const transition=pending.findLast(t=>t.delay===550);transition.fn();assert.equal(s.locked,false)}}
-  assert.ok(s.done&&s.solved);
- }finally{t.dom.window.close()}
-});
-test('Each quick game ends at 45 seconds, never starts while reading, and pauses in help',async()=>{
- for(const id of ['spot','math','pairs','order','switch']){const t=await setup();try{
-  t.click(`[data-game="${id}"]`);const s=t.w.testApi.getState();s.seconds=44;t.w.testApi.tick();assert.equal(s.seconds,44);assert.ok(!s.done);
-  t.click('[data-action="quick-start"]');t.click('[data-action="help"]');s.seconds=45;t.w.testApi.tick();assert.ok(!s.done);t.click('.dialog-close');t.w.testApi.tick();assert.ok(s.done);assert.equal(s.seconds,45);assert.equal(s.solved,false);assert.match(t.text(),/ROUND COMPLETE/);assert.ok(!t.w.document.querySelector('[data-quick]'));
- }finally{t.dom.window.close()}}
-});
-test('Returning from a hidden tab does not charge background time to a quick round',async()=>{
- const t=await setup();try{t.click('[data-game="order"]');t.click('[data-action="quick-start"]');const s=t.w.testApi.getState();s.seconds=10;let now=t.w.Date.now();t.w.Date.now=()=>now;Object.defineProperty(t.w.document,'hidden',{configurable:true,value:true});t.w.document.dispatchEvent(new t.w.Event('visibilitychange'));now+=60000;Object.defineProperty(t.w.document,'hidden',{configurable:true,value:false});t.w.document.dispatchEvent(new t.w.Event('visibilitychange'));now+=100;t.w.testApi.tick();assert.ok(s.seconds<10.2);assert.ok(!s.done)}finally{t.dom.window.close()}
-});
+
+test('All ten games share a grid and retired games are absent',async()=>{const t=await setup();try{assert.equal(t.w.document.querySelectorAll('.game-cards').length,1);assert.deepEqual([...t.w.document.querySelectorAll('.game-cards [data-game]')].map(el=>el.dataset.game),['trail','crowns','words','sudoku','echo','spot','math','thread','hop','duet'])}finally{t.dom.window.close()}});
+test('The five short puzzles start immediately and have no countdown or forced timeout',async()=>{for(const id of ['spot','math','thread','hop','duet']){const t=await setup();try{t.click(`[data-game="${id}"]`);assert.ok(!t.w.document.querySelector('.start-overlay'));assert.ok(!t.w.document.querySelector('.timer'));assert.doesNotMatch(t.text(),/45[- ]second|seconds|UNDER A MINUTE/);const s=t.w.testApi.getState();s.seconds=1000;t.w.testApi.tick();assert.ok(!s.done);assert.ok(t.w.document.querySelector('[data-quick]:not([disabled])'))}finally{t.dom.window.close()}}});
+test('Oddly and Sumthing finish their compact rounds and can replay',async()=>{for(const id of ['spot','math']){const t=await setup();try{t.click(`[data-game="${id}"]`);const s=t.w.testApi.getState();for(const p of s.rounds)t.click(`[data-quick="${id==='spot'?p.odd:p.answer}"]`);assert.ok(s.done&&s.solved);assert.match(t.text(),/CLEAN SOLVE/);t.click('[data-action="practice"]');assert.ok(!t.w.testApi.getState().done)}finally{t.dom.window.close()}}});
+test('Thread handles rejection, unfolding and a complete compound-word reveal',async()=>{const t=await setup();try{t.click('[data-game="thread"]');const s=t.w.testApi.getState();const wrong=s.choices.findIndex(w=>w!==s.answer);t.click(`[data-quick="${wrong}"]`);assert.equal(s.errors,1);assert.ok(t.w.document.querySelector(`[data-quick="${wrong}"]`).disabled);t.click('[data-action="unfold"]');assert.equal(s.revealed,3);assert.equal(s.hints,1);t.click(`[data-quick="${s.choices.indexOf(s.answer)}"]`);assert.ok(s.done);assert.equal(t.w.document.querySelectorAll('.solution-reveal span').length,3)}finally{t.dom.window.close()}});
+test('Wordhop allows correction and returning a misplaced word to the bank',async()=>{const t=await setup();try{t.click('[data-game="hop"]');const s=t.w.testApi.getState();t.click(`[data-quick="${s.bank.indexOf(s.path[2])}"]`);assert.equal(s.slots[1],s.path[2]);t.click('[data-action="hop-clear"]');assert.equal(s.slots[1],null);for(let n=1;n<=3;n++){t.click(`[data-slot="${n}"]`);t.click(`[data-quick="${s.bank.indexOf(s.path[n])}"]`)}assert.ok(s.done);assert.match(t.text(),/SOLVED/)}finally{t.dom.window.close()}});
+test('Duet keeps clues locked, supports removal, and accepts the valid solution',async()=>{const t=await setup();try{t.click('[data-game="duet"]');const s=t.w.testApi.getState(),blank=s.givens.findIndex(v=>v===null),fixed=s.givens.findIndex(v=>v!==null);assert.ok(t.w.document.querySelector(`[data-quick="${fixed}"]`).disabled);t.click('[data-plant="1"]');t.click(`[data-quick="${blank}"]`);t.click(`[data-quick="${blank}"]`);assert.equal(s.board[blank],null);for(let i=0;i<16;i++)if(s.givens[i]===null){t.click(`[data-plant="${s.solution[i]}"]`);t.click(`[data-quick="${i}"]`)}assert.ok(s.done)}finally{t.dom.window.close()}});
+test('Versioned short-puzzle progress resumes without reviving old timed sessions',async()=>{const t=await setup(JSON.stringify({records:{},sessions:{[`${engine.dayKey()}:spot`]:{done:true,round:8}}}));let storage;try{t.click('[data-game="spot"]');const s=t.w.testApi.getState();assert.equal(s.round,0);t.click(`[data-quick="${s.rounds[0].odd}"]`);storage=t.w.localStorage.getItem('lbl-v1')}finally{t.dom.window.close()}const reloaded=await setup(storage);try{reloaded.click('[data-game="spot"]');assert.equal(reloaded.w.testApi.getState().round,1)}finally{reloaded.dom.window.close()}});

@@ -1,24 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createQuick,quickMove,quickProgress,quickScore,flipLights} from '../quick.js';
-
-test('100 Glow seeds have three distinct-tap solutions for all three boards',()=>{
- for(let seed=0;seed<100;seed++)for(const p of createQuick('switch',seed).puzzles){assert.equal(new Set(p.solution).size,3);let board=[...p.board];p.solution.forEach(i=>board=flipLights(board,i));assert.ok(board.every(Boolean));assert.ok(p.board.some(v=>!v))}
-});
-test('Sumthing has exactly one correct option and correct arithmetic across 100 seeds',()=>{
- for(let seed=0;seed<100;seed++)for(const p of createQuick('math',seed).rounds){assert.equal(new Set(p.choices).size,4);assert.ok(p.choices.includes(p.answer));assert.equal(p.answer,p.op==='+'?p.a+p.b:p.op==='−'?p.a-p.b:p.a*p.b)}
-});
-test('Oddly always has one different shape, and each Peel deck has six pairs',()=>{
- for(let seed=0;seed<100;seed++){
-  for(const r of createQuick('spot',seed).rounds){assert.notEqual(r.shape,r.oddShape);assert.ok(r.odd>=0&&r.odd<r.count)}
-  const deck=createQuick('pairs',seed).deck;assert.equal(deck.length,12);for(let n=0;n<6;n++)assert.equal(deck.filter(v=>v===n).length,2);
- }
-});
-test('quick engines reject input before start and after the round finishes',()=>{
- for(const id of ['spot','math','order','pairs','switch']){const s=createQuick(id,'test'),before=JSON.stringify(s);assert.ok(quickMove(id,s,0).ignored);assert.equal(JSON.stringify(s),before);s.started=true;s.done=true;assert.ok(quickMove(id,s,0).ignored)}
-});
-test('quick completion and scores reward accuracy and time',()=>{
- const s=createQuick('order','test');s.started=true;assert.equal(quickMove('order',s,3).correct,false);assert.equal(s.errors,1);
- for(let n=1;n<=16;n++)quickMove('order',s,n);
- assert.equal(quickProgress('order',s),1);assert.ok(s.solved);assert.equal(quickScore('order',s),965);s.seconds=45;assert.equal(quickScore('order',s),785);
-});
+import {createQuick,quickMove,quickScore,duetCandidates,validDuet,duetConflict,hopSets,oneLetter,bridgeSets} from '../quick.js';
+test('100 Duet puzzles have unique solutions, a balanced center and at least seven blanks',()=>{for(let seed=0;seed<100;seed++){const p=createQuick('duet',seed);assert.equal(duetCandidates(p.givens).length,1);assert.ok(validDuet(p.solution));assert.ok(p.givens.filter(v=>v===null).length>=7)}});
+test('100 arithmetic seeds have four unique choices and valid forward/inverse equations',()=>{for(let seed=0;seed<100;seed++)for(const p of createQuick('math',seed).rounds){assert.equal(new Set(p.choices).size,4);assert.ok(p.choices.includes(p.answer));assert.equal(p.inverse?p.answer*p.b+p.c:p.a*p.b-p.c,p.inverse?p.result:p.answer)}});
+test('Oddly has exactly one different multiset regardless of orientation',()=>{for(let seed=0;seed<100;seed++)for(const p of createQuick('spot',seed).rounds){assert.notDeepEqual([...p.base].sort(),[...p.oddPattern].sort());assert.equal(p.base.length,4);assert.equal(p.oddPattern.length,4);assert.ok(p.odd>=0&&p.odd<9);assert.equal(p.turns.length,9)}});
+test('Wordhop ladders change one letter per link and have distinct options',()=>{for(const p of hopSets){assert.equal(p.path.length,5);assert.ok(p.path.slice(1).every((w,i)=>oneLetter(p.path[i],w)));assert.equal(new Set([...p.path.slice(1,4),...p.decoys]).size,6)}});
+test('Thread sets have three directional fragments and six distinct choices',()=>{for(const [answer,fragments,decoys] of bridgeSets){assert.equal(fragments.length,3);assert.equal(new Set([answer,...decoys]).size,6);assert.ok(fragments.every(([a,b])=>Boolean(a)!==Boolean(b)));assert.ok(fragments.some(([a])=>a)&&fragments.some(([,b])=>b))}});
+test('Short puzzle scores do not reward speed and finished games reject input',()=>{const s=createQuick('math','score');for(const p of s.rounds)quickMove('math',s,p.answer);assert.ok(s.solved);const points=quickScore('math',s);s.seconds=9000;assert.equal(quickScore('math',s),points);s.done=true;assert.ok(quickMove('math',s,0).ignored)});
+test('Duet explains local violations without exposing solution correctness',()=>{const board=Array(16).fill(null);board[0]=board[1]=board[2]=1;assert.match(duetConflict(board),/Row 1.*ink/);assert.equal(duetConflict(Array(16).fill(null)),'')});

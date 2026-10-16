@@ -1,53 +1,28 @@
-# Usability pass
+# Current verification
 
-## Verification method
+## Passed: 35 automated tests
 
-Automated DOM interaction tests exercise actual application event handlers, plus independent puzzle generator tests. Browser automation reported no connected browsers or apps, so no hands-on browser session, rendered layout review, or real-device playtest was possible. Passing these tests does not establish that new players understand the games without assistance.
+- Complete all ten games through their UI event handlers.
+- Verify all ten cards share one grid, with the five compact games after the originals.
+- Verify compact games have no start overlay, countdown, forced timeout or speed bonus.
+- Check versioned saves and restoration of unfinished puzzles.
+- Exercise incorrect guesses, corrections, notes, undo, restarts, hints and keyboard focus.
+- Validate 100 path boards, 100 crown boards and hint completions, and 60 uniquely solvable Sudoku boards.
+- Validate 100 Duet seeds: unique solutions, at least seven blanks, balanced rows, columns and center.
+- Validate 100 Oddly seeds: exactly one distinct shape multiset despite rotations.
+- Validate 100 Sumthing seeds: correct forward/inverse arithmetic and distinct options.
+- Check every Wordhop ladder differs by one letter at each link.
+- Check every Thread set has three directional fragments and six distinct choices.
+- Verify reduced-motion behavior and Echo playback interruption.
 
-## Findings addressed
+## Design changes
 
-| Game / area | Friction | Change |
-| --- | --- | --- |
-| All boards | Core rules were hidden on phones | Short rule and visual cue above every board |
-| All boards | Rebuilding the page on every move lost focus and prevented transitions | Reconcile existing elements; tested focus and element identity |
-| Trail | Unclear starting point and silent invalid moves | Glowing start, valid-neighbor dots, specific feedback and dead-end guidance |
-| Trail | Dragging could not rewind | Drag back one step, or tap any prior square |
-| Crown | Three-state tapping was hard to discover | Tap to place/remove; explicit Mark tool |
-| Crown | Mistakes only surfaced after checking | Immediate conflict outlines and plain-language reason |
-| Crown | Correct placement required a separate check | Automatic completion |
-| Crown | Hints could remove crowns from another valid solution | Find a completion consistent with existing crowns |
-| Kinship | Guesses had little tactile feedback | Selection pop, gentle mismatch shake, matching-group reveal |
-| Kinship | One category required specialist musical vocabulary | Replaced with everyday objects |
-| Sixfold | Unclear number-entry sequence and duplicate cause | Disable pad until a writable square is selected; highlight peers and explain duplicates |
-| Sixfold | Old notes lingered after number entry | Remove that number from related notes |
-| Echo | Watching vs playing was easy to miss | Distinct colored status and clear round button |
-| Echo | Playback continued behind help or in a hidden tab | Stop playback and allow replay |
-| Motion | Mostly static; animations restarted unnecessarily | Stable controls, action-specific feedback, limited welcome motion and brief win confetti |
+Peel, Upbeat and Glow are replaced by Thread, Wordhop and Duet. Oddly now requires comparing rotated four-shape patterns. Sumthing uses two-step equations instead of single elementary sums. Compact games are self-paced and immediately playable, with sparse instructions beside the board.
 
-## Automated coverage
+Motion is restrained: small press responses, brief error nudges, short reveals, and preserved DOM controls for focus and stable interaction. New puzzle completions show the solved connection or word chain where applicable instead of full-screen confetti. Duet uses neutral ink/ivory symbols, clear selected tools, fixed-clue markers, a center outline, and local rule feedback.
 
-- Complete all five games through their controls.
-- Reject invalid first moves; extend and rewind a path with pointer events.
-- Crown placement, removal, marking, conflict explanations and automatic win.
-- Wrong word guesses, editing selections, and preserving keyboard focus.
-- Sudoku notes, undo, duplicate detection, erase and completion.
-- Echo mistakes, retries, all rounds, and cancellation when help opens.
-- Restart and hints; completion and unfinished progress restored after application reload.
-- Reduced-motion skips JavaScript animation and confetti.
-- Every game exposes inline instructions without opening a dialog.
-- 100 path seeds, 100 crown region seeds, 100 crown hint completions, and 60 unique Sudoku puzzles.
+## Verification limits
 
-## Manual checks still needed
+No rendered browser inspection or physical touchscreen test has been completed. A prior Windows Computer Use attempt stopped because the tool could not determine Chrome's URL confidently enough to enforce its policy. Browser input was stopped. DOM tests do not establish animation quality, layout correctness, touch comfort or subjective difficulty.
 
-1. Play each game in Chrome/Safari at desktop and 375px phone widths; check wrapping, scroll position, board sizing and animation timing.
-2. Test real touchscreen drag gestures, diagonal drags, quick taps and interruptions.
-3. Ask a first-time player to begin each game without opening help. Observe the first move, first error, and recovery; aim for understanding within 15 seconds.
-4. Check keyboard-only use, browser zoom and device reduced-motion settings.
-5. Confirm Echo feels comfortable across slower devices and that every repeated flash is distinguishable.
-
-
-## Ten-game extension
-
-33 automated tests pass after adding the five quick games. Coverage includes all ten cards in one grid in the requested order, all five quick-game completion paths, 45-second timeout and help pause for every quick game, fruit-card mismatch locking, Glow transition locking and partial-board restoration, and personal best/replay behavior. Generation checks exercise 100 seeds each for Glow, arithmetic, shapes and pairs. Every quick board displays its core rule above the board on all screen sizes.
-
-A later Windows Computer Use attempt could launch Chrome, but state capture stopped because the tool could not confidently determine the current browser URL. No further browser input was attempted. Visual and real-device checks remain outstanding.
+Before release, test at 320px, 375px and desktop widths, keyboard-only navigation, browser zoom and reduced motion. Have adult first-time players solve each game without help; observe first-move clarity, recovery from mistakes, challenge, completion time and desire to replay. Review Thread's compound-word vocabulary for regional ambiguity. Do not claim guaranteed completion within a minute: difficulty and familiarity vary by player.

@@ -6,7 +6,7 @@ export function updateDOM(target, html) {
   children.forEach((next,i)=>{
    let old=parent.childNodes[i];
    if(!old){parent.append(next.cloneNode(true));return}
-   const key=n=>n.nodeType===1?['data-cell','data-word','data-action','data-number'].map(a=>n.getAttribute(a)||'').join('|'):'';
+   const key=n=>n.nodeType===1?['data-cell','data-word','data-action','data-number','data-quick','data-slot','data-plant'].map(a=>n.getAttribute(a)||'').join('|'):'';
    if(old.nodeType!==next.nodeType||old.nodeName!==next.nodeName||key(old)!==key(next)){old.replaceWith(next.cloneNode(true));return}
    if(next.nodeType===3){if(old.textContent!==next.textContent)old.textContent=next.textContent;return}
    if(next.nodeType!==1)return;
@@ -32,7 +32,7 @@ export function crownProblems(cells,regions) {
 }
 export function animate(selector,kind='pop') {
  if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
- const frames={pop:[{transform:'scale(.85)'},{transform:'scale(1.08)',offset:.65},{transform:'scale(1)'}],shake:[{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],reveal:[{opacity:0,transform:'translateY(10px) scale(.96)'},{opacity:1,transform:'translateY(0) scale(1)'}]};
+ const frames={pop:[{transform:'scale(.96)'},{transform:'scale(1.025)',offset:.65},{transform:'scale(1)'}],shake:[{transform:'translateX(0)'},{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'translateX(-2px)'},{transform:'translateX(0)'}],reveal:[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}]};
  document.querySelectorAll(selector).forEach(el=>el.animate?.(frames[kind],{duration:kind==='shake'?300:380,easing:'cubic-bezier(.2,.8,.2,1)'}));
 }
 export function celebrate(){

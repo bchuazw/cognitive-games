@@ -1,10 +1,10 @@
 # Little by Little
 
-Ten browser games on one page. The original five: Trail (path planning), Crown (spatial logic), Kinship (word grouping), Sixfold (6 × 6 Sudoku), and Echo (sequence memory).
+Ten browser puzzles in one grid. The original five are followed immediately by five compact, self-paced games for adults.
 
-## Play locally
+## Run
 
-Requires Node.js 18 or newer to play. No runtime dependencies or build step. You can also double-click `Start Games.cmd`.
+Requires Node.js 18 or newer. No runtime dependencies or build step.
 
 ```powershell
 git clone https://github.com/bchuazw/cognitive-games.git
@@ -14,44 +14,42 @@ node server.mjs
 
 To get the latest changes later, run `git pull` in the same folder.
 
-Open **http://localhost:4173**. On a phone on the same Wi-Fi, use `http://YOUR-PC-LAN-IP:4173` if Windows Firewall allows the connection. The server listens on all interfaces for this purpose; use a trusted network.
+Open http://localhost:4173, or double-click `Start Games.cmd`. The server binds to all interfaces so a phone on the same trusted Wi-Fi can use your computer's LAN IP if its firewall permits it.
 
-Run generator validation with `node --test tests/engine.test.mjs`. For the full suite, use Node.js 22 or newer, run `npm.cmd install` to install the development-only DOM test dependency, then `npm.cmd test`. The automated tests cover generators and gameplay completion, hints, undo, restart, and saved daily progress. Visual browser and real-device testing remain to be done.
+## Games
 
-## Included
+| Game | Idea |
+| --- | --- |
+| Trail | Visit every square while connecting numbered checkpoints |
+| Crown | Place non-touching crowns, one per row, column and region |
+| Kinship | Find four families among sixteen words |
+| Sixfold | Solve a uniquely generated 6 × 6 Sudoku |
+| Echo | Repeat growing visual sequences |
+| Oddly | Find the different multiset of shapes among rotated motifs; five patterns |
+| Sumthing | Solve four two-step equations, alternating forward and inverse reasoning |
+| Thread | Find one word that completes three compounds, with gaps on either side |
+| Wordhop | Fill three clued gaps between endpoints, changing one letter each step |
+| Duet | Balance two ink/two ivory tiles in each row, column and outlined center |
 
-- Responsive desktop and phone layouts, touch targets, keyboard support, reduced-motion support, labeled game controls, and instructions.
-- Deterministic daily puzzles based on the device's local date, free play after completion, restart, hints, undo where applicable, and a timer that pauses in background tabs.
-- Browser-local automatic saves and completion statistics. No accounts, backend, analytics, or advertisements.
-- Guaranteed solvable path and crown boards; Sixfold generation verifies exactly one solution. Crown can admit multiple valid arrangements, all accepted.
-- Eight handcrafted Kinship sets. Sets can repeat; expanding this editorial library is the main content task before a long-running public release.
-- Echo has five rounds, with sequences increasing from three to seven tiles. Playback is visual; a fully nonvisual memory mode is not included.
+Peel, Upbeat and Glow have been replaced. The five compact puzzles start immediately, have no countdown or expiry, and award no speed bonus. They are short because of their puzzle size, not a time restriction. Completion scores begin at 1,000, with deductions for incorrect attempts and revealed clues. Duet permits freely revising placements without a score penalty.
 
-## Structure and mobile next steps
+Daily seeds use the device's local date. Progress is saved in browser localStorage. Revised puzzles use versioned save keys so old timed sessions do not contaminate the new games; old records are preserved. Practice puzzles are available after completion. No accounts, ads, analytics or cloud sync.
 
-`engine.js` holds framework-independent puzzle generation and validation. `app.js` handles screens and gameplay; `ux.js` preserves live controls and provides feedback animations; `styles.css` holds responsive UI. `server.mjs` is a simple development server. Deploy the HTML, CSS, JS and icon files to a static host for a public browser version.
+## Development
 
-The interface is responsive for mobile browsers now. A future mobile release can reuse the engines in a native shell or a Capacitor wrapper, add offline asset caching, app icons, haptics, sound preferences, and optional cloud saves. There is no native app or installable PWA yet.
+`engine.js` generates the original puzzles. `short-puzzles.js` contains the compact puzzle engines, content and board markup; `quick.js` re-exports that API. `app.js` manages navigation, progress and input. `ux.js` updates existing controls and provides motion helpers. `styles.css` includes desktop and mobile layouts, focus states, touch feedback and reduced-motion support.
 
-Typography loads from Google Fonts with local fallbacks. Game logic and assets otherwise require no external services. Progress is stored only on the current browser and does not sync between devices.
+For all tests, use Node.js 22 or newer:
 
-## Usability and motion pass
+```powershell
+npm.cmd install
+npm.cmd test
+```
 
-Each board includes a short inline rule on phones and desktops. Trail highlights possible next moves and supports drag-to-rewind. Crown uses separate Crown/Mark tools, explains conflicts immediately, and completes automatically; hints respect any arrangement that can still be solved. Sixfold highlights peers and duplicate entries. Echo distinguishes playback from input and stops playback when help opens or the tab is hidden. Controls remain in the DOM between moves to preserve focus and transitions. Motion includes tile feedback, gentle error shakes, group reveals, welcoming card entrances and brief completion confetti, with reduced-motion support.
+There are 35 tests covering puzzle invariants and actual application event handlers. See `PLAYTEST.md` for limitations. Google Fonts has local font fallbacks; other assets are served locally.
 
-See `PLAYTEST.md` for coverage and remaining manual checks.
+## Inspiration and content
 
+[LinkedIn's game descriptions](https://www.linkedin.com/help/linkedin/answer/a6863543) informed the use of compact association, word-ladder and balance puzzles. Thread mixes prefix/suffix placement, Wordhop uses a small selectable word bank, and Duet adds a center-balance constraint. These are independent implementations and original puzzle sets, not copies of LinkedIn daily puzzles or branding.
 
-## Five games under a minute
-
-The next five cards appear directly after the original five in the same grid:
-
-- **Oddly**: find the different shape across eight rounds.
-- **Sumthing**: solve eight bite-size arithmetic questions.
-- **Peel**: flip and match six pairs of fruit cards.
-- **Upbeat**: tap shuffled numbers from 1 through 16.
-- **Glow**: light all nine tiles by flipping a tile and its neighbors; three boards, each solvable in three taps.
-
-Quick rounds last up to **45 seconds of active play**, finishing early when the target is reached. Start screens do not consume time. Background tabs and open help dialogs pause the clock. At timeout, the round ends with a partial score and a replay option. Each game keeps a personal best on this browser, and daily round completion contributes to the 10-game progress indicator. Scores award 800 points for full completion, up to 180 for finishing early, and subtract 15 per mistake (minimum zero). Glow measures efficiency through time rather than a move penalty.
-
-`quick.js` contains the five engines and board markup. Tests cover generated content, full completion, timeout, pause behavior, mismatches, interrupted transitions and save/restore. Browser rendering remains unverified: Windows Computer Use stopped because it could not confidently determine Chrome's URL.
+Word content is finite: 8 Kinship sets, 15 Thread sets and 8 Wordhop ladders. Expanding the editorial library and tuning difficulty through adult first-time-player testing are the next product tasks. The browser layout is mobile-responsive; native packaging, offline caching and cross-device saves are future work.
